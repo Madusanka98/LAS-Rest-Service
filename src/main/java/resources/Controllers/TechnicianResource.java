@@ -15,15 +15,11 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import java.sql.Date;
-import java.time.LocalDate;
 import resources.DataAccess.TechnicianDBUtils;
 import resources.Models.Technician;
 import resources.Email.EmailSender;
 import java.util.Random;
 import resources.Models.UserInformation;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import resources.DataAccess.UserInfoDBUtils;
 /**
  *
