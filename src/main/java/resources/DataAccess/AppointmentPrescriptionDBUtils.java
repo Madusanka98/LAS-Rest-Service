@@ -12,10 +12,8 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import resources.Models.Appointment;
 import resources.Models.AppointmentPrescription;
 import resources.Models.AppointmentPrescriptionDoc;
-import resources.Models.ApprointmentDoc;
 
 /**
  *

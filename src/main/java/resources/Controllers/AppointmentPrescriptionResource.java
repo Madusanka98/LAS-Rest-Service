@@ -15,9 +15,7 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
-import resources.DataAccess.AppointmentDBUtils;
 import resources.DataAccess.AppointmentPrescriptionDBUtils;
-import resources.Models.Appointment;
 import resources.Models.AppointmentPrescription;
 
 /**

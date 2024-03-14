@@ -9,15 +9,7 @@ import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import static resources.DataAccess.DoctorDBUtils.DB_URL;
-import static resources.DataAccess.DoctorDBUtils.PASS;
-import static resources.DataAccess.DoctorDBUtils.USER;
-import static resources.DataAccess.TechnicianDBUtils.DB_URL;
-import static resources.DataAccess.TechnicianDBUtils.PASS;
-import static resources.DataAccess.TechnicianDBUtils.USER;
-import resources.Models.Doctor;
 import resources.Models.Patient;
-import resources.Models.Technician;
 
 /**
  *

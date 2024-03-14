@@ -11,7 +11,6 @@ import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
 import resources.DataAccess.AppointmentReportDBUtils;
-import resources.DataAccess.DoctorDBUtils;
 
 /**
  *
