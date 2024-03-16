@@ -11,11 +11,7 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
-import static resources.DataAccess.DoctorDBUtils.DB_URL;
-import static resources.DataAccess.DoctorDBUtils.PASS;
-import static resources.DataAccess.DoctorDBUtils.USER;
 import resources.Models.AppointmentReport;
-import resources.Models.Doctor;
 
 /**
  *

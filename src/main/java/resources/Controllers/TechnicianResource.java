@@ -19,6 +19,7 @@ import resources.DataAccess.TechnicianDBUtils;
 import resources.Models.Technician;
 import resources.Email.EmailSender;
 import java.util.Random;
+import static resources.Controllers.PatientResource.hashPassword;
 import resources.Models.UserInformation;
 import resources.DataAccess.UserInfoDBUtils;
 /**
@@ -76,7 +77,8 @@ public class TechnicianResource {
             String msg="";
             Technician technician = gson.fromJson(json, Technician.class); 
             String password = generateRandomPassword(6);
-            var result = userInfo(technician, password);
+            String pass = hashPassword(password);
+            var result = userInfo(technician, pass);
             new UserInfoDBUtils().addUserInfo(result);
             String toEmail = technician.getEmail();
             var userInfo = new UserInfoDBUtils().getUserId( toEmail);

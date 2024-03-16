@@ -35,7 +35,7 @@ public class AppointmentPrescriptionDBUtils {
     
     
     public boolean addAppointmentPrescription(AppointmentPrescription st) {
-        String insertQuery = "INSERT INTO apPrescription ( testResults, technicians,comment , appointmentId)  VALUES ('"+ st.getTestResults()+"','"+ st.getTechnicians()+"','"+ st.getComment()+"', '"+ st.getAppointmentId()+"');";
+        String insertQuery = "INSERT INTO apPrescription ( testResults, technicians,comment , appointmentId,tId)  VALUES ('"+ st.getTestResults()+"','"+ st.getTechnicians()+"','"+ st.getComment()+"','"+ st.getAppointmentId()+"', '"+ st.gettId()+"');";
         try {
             try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
                 // Create a prepared statement with the option to retrieve generated keys
@@ -160,6 +160,29 @@ public class AppointmentPrescriptionDBUtils {
         return appointments;
     }
     
+    public List<AppointmentPrescription> getPrescriptionByUserId(int id) {
+        List<AppointmentPrescription> appointments = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+                Statement stmt = conn.createStatement(); 
+                ResultSet rs = stmt.executeQuery("SELECT * FROM apPrescription WHERE userId="+ id);) {
+            while (rs.next()) {
+                AppointmentPrescription st = new AppointmentPrescription();
+                st.setId( rs.getInt("id"));
+                st.setTestResults(rs.getString("testResults"));
+                st.setTechnicians(rs.getString("technicians"));
+                st.setComment(rs.getString("comment"));
+                st.setAppointmentId(rs.getInt("appointmentId"));
+                
+                List<AppointmentPrescriptionDoc> docses =  getAppointmentPrescriptionDocs(rs.getInt("id"));
+                st.setApprointmentDocList(docses);
+                appointments.add(st);
+            }
+        } catch (SQLException e) {
+            System.err.print(e);
+        }
+        return appointments;
+    }
+    
     public AppointmentPrescription getAppointmentPrescriptionbyUserId(int id) throws SQLException {
         AppointmentPrescription st = new AppointmentPrescription();
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
@@ -185,7 +208,7 @@ public class AppointmentPrescriptionDBUtils {
             try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
                     Statement stmt = conn.createStatement();) 
             {
-                stmt.executeUpdate("UPDATE apPrescription SET testResults = '" +st.getTestResults()+ "', technicians = '" + st.getTechnicians()+ "' , comment = '" + st.getComment()+ "' WHERE (id = '" + id +"');");
+                stmt.executeUpdate("UPDATE apPrescription SET testResults = '" +st.getTestResults()+ "', technicians = '" + st.getTechnicians()+ "' , comment = '" + st.getComment()+ "' , appointmentId = '" + st.getAppointmentId()+ "' , tId = '" + st.gettId()+ "' WHERE (id = '" + id +"');");
                 updateAppointmentPrescriptionDocs(st.getApprointmentDocList(),st.getId());
                 return true;
             } catch (SQLException e) {

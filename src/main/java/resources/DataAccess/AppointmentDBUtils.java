@@ -35,38 +35,56 @@ public class AppointmentDBUtils {
     
     
     
-    public boolean addAppointment(Appointment st) {
-        String insertQuery = "INSERT INTO appointment ( preferredDate, preferredTime,appointmentReason , appointmentType, referredDoctor, emgContactPer,emgMobileNum,userId)  VALUES ('"+ st.getPreferredDate()+"','"+ st.getPreferredTime()+"','"+ st.getAppointmentReason()+"','"+ st.getAppointmentType() +"','"+ st.getReferredDoctor()+"','"+ st.getEmgContactPer()+"','"+ st.getEmgMobileNum()+"', '"+ st.getUserId()+"');";
-        try {
-            try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
-                // Create a prepared statement with the option to retrieve generated keys
-                try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-                    // Set the parameter values for the insert query
-                    //preparedStatement.setString(1, "value1");
-                    //preparedStatement.setString(2, "value2");
+    public boolean addAppointment(Appointment st) throws SQLException {
+        if(checkTimeavAilability(st)){
+            String insertQuery = "INSERT INTO appointment ( preferredDate, preferredTime,appointmentReason , appointmentType, referredDoctor, emgContactPer,emgMobileNum,userId)  VALUES ('"+ st.getPreferredDate()+"','"+ st.getPreferredTime()+"','"+ st.getAppointmentReason()+"','"+ st.getAppointmentType() +"','"+ st.getReferredDoctor()+"','"+ st.getEmgContactPer()+"','"+ st.getEmgMobileNum()+"', '"+ st.getUserId()+"');";
+            try {
+                try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+                    // Create a prepared statement with the option to retrieve generated keys
+                    try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
+                        // Set the parameter values for the insert query
+                        //preparedStatement.setString(1, "value1");
+                        //preparedStatement.setString(2, "value2");
 
-                    // Execute the insert query
-                    int affectedRows = preparedStatement.executeUpdate();
+                        // Execute the insert query
+                        int affectedRows = preparedStatement.executeUpdate();
 
-                    if (affectedRows > 0) {
-                        // Retrieve the generated keys (including the last inserted ID)
-                        try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
-                            if (generatedKeys.next()) {
-                                int lastInsertedId = generatedKeys.getInt(1);
-                                addApprointmentDocs(st.getApprointmentDocList(),lastInsertedId);
-                            } else {
-                                System.err.println("Document upload failed");
+                        if (affectedRows > 0) {
+                            // Retrieve the generated keys (including the last inserted ID)
+                            try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
+                                if (generatedKeys.next()) {
+                                    int lastInsertedId = generatedKeys.getInt(1);
+                                    addApprointmentDocs(st.getApprointmentDocList(),lastInsertedId);
+                                } else {
+                                    System.err.println("Document upload failed");
+                                }
                             }
+                        } else {
+                            System.err.println("");
                         }
-                    } else {
-                        System.err.println("");
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            return true;
+        }else
         return false;
+    }
+    
+    public boolean checkTimeavAilability(Appointment app) throws SQLException{
+        Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        Statement stmt = conn.createStatement();
+        String query = "SELECT COUNT(*) AS count FROM abc_lab.appointment WHERE preferredDate= '"+ app.getPreferredDate()+ "' and preferredTime= '"+ app.getPreferredTime()+ "' ;";
+        ResultSet rs1 = stmt.executeQuery(query );
+        rs1.next(); 
+        int count = rs1.getInt(1);
+        //boolean hasRecords = count > 0;
+        if(count == 0){
+            return true;
+        }else
+            return false;
+
     }
     
     public  void addApprointmentDocs(List<ApprointmentDoc> docs,int aId) {
@@ -134,6 +152,7 @@ public class AppointmentDBUtils {
         return st;
     }
     
+    
     public List<ApprointmentDoc> getApprointmentDocs(int id) {
         List<ApprointmentDoc> getdocs = new ArrayList<>();
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
@@ -186,8 +205,94 @@ public class AppointmentDBUtils {
         return appointments;
     }
     
-    public Appointment getAppointmentbyUserId(int id) throws SQLException {
+    public List<Appointment> getPatientAppointments( int id) {
+        List<Appointment> appointments = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+                Statement stmt = conn.createStatement(); 
+                ResultSet rs = stmt.executeQuery("SELECT * FROM appointment  WHERE userId="+ id);) {
+            while (rs.next()) {
+                Appointment st = new Appointment();
+                st.setId( rs.getInt("id"));
+                st.setPreferredDate( rs.getDate("preferredDate"));
+                st.setPreferredTime(rs.getString("preferredTime"));
+                st.setAppointmentReason(rs.getString("appointmentReason"));
+                if(rs.getInt("appointmentType") != 0){
+                    TestingType type = getTestingType(rs.getInt("appointmentType"));
+                    st.setAppointmentType(type.getId());
+                }
+                st.setReferredDoctor(rs.getString("referredDoctor"));
+                st.setEmgContactPer(rs.getString("emgContactPer"));
+                st.setEmgMobileNum(rs.getString("emgMobileNum"));
+                st.setUserId(rs.getInt("userId"));
+                TestingType type =  getTestingType((rs.getInt("appointmentType")));
+                st.setTestingType(type);
+                List<ApprointmentDoc> docses =  getApprointmentDocs(rs.getInt("id"));
+                st.setApprointmentDocList(docses);
+                if(hasprePrescription(st,st.getId())){
+                    appointments.add(st);
+                }
+                //break;
+                //appointments.add(st);
+            }
+        } catch (SQLException e) {
+            System.err.print(e);
+        }
+        return appointments;
+    }
+    
+    public boolean hasprePrescription(Appointment app,int id) throws SQLException{
+        Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        Statement stmt = conn.createStatement();
+        String query = "SELECT COUNT(*) AS count FROM abc_lab.apprescription WHERE appointmentId= '"+ id+ "' ;";
+        ResultSet rs1 = stmt.executeQuery(query );
+        rs1.next(); 
+        int count = rs1.getInt(1);
+        //boolean hasRecords = count > 0;
+        if(count == 0){
+            return true;
+        }else
+            return false;
+
+    }
+    
+    public List<Appointment> getPrescriptionbyUserId( int id) {
+        List<Appointment> appointments = new ArrayList<>();
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+                Statement stmt = conn.createStatement(); 
+                ResultSet rs = stmt.executeQuery("SELECT * FROM appointment  WHERE userId="+ id);) {
+            while (rs.next()) {
+                Appointment st = new Appointment();
+                st.setId( rs.getInt("id"));
+                st.setPreferredDate( rs.getDate("preferredDate"));
+                st.setPreferredTime(rs.getString("preferredTime"));
+                st.setAppointmentReason(rs.getString("appointmentReason"));
+                if(rs.getInt("appointmentType") != 0){
+                    TestingType type = getTestingType(rs.getInt("appointmentType"));
+                    st.setAppointmentType(type.getId());
+                }
+                st.setReferredDoctor(rs.getString("referredDoctor"));
+                st.setEmgContactPer(rs.getString("emgContactPer"));
+                st.setEmgMobileNum(rs.getString("emgMobileNum"));
+                st.setUserId(rs.getInt("userId"));
+                TestingType type =  getTestingType((rs.getInt("appointmentType")));
+                st.setTestingType(type);
+                List<ApprointmentDoc> docses =  getApprointmentDocs(rs.getInt("id"));
+                st.setApprointmentDocList(docses);
+                if(!hasprePrescription(st,st.getId())){
+                    appointments.add(st);
+                }
+                //break;
+                //appointments.add(st);
+            }
+        } catch (SQLException e) {
+            System.err.print(e);
+        }
+        return appointments;
+    }
+    
+    public List<Appointment> getAppointmentbyUserId(int id) throws SQLException {
         Appointment st = new Appointment();
+        List<Appointment> appointments = new ArrayList<>();
         try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM appointment WHERE userId="+ id);) {
@@ -207,7 +312,7 @@ public class AppointmentDBUtils {
             System.err.print(e);
             throw e;
         }
-        return st;
+        return appointments;
     }
     
     public boolean updateAppointment(Appointment st) {

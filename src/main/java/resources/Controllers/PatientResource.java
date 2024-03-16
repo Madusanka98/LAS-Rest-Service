@@ -13,17 +13,16 @@ import jakarta.ws.rs.PathParam;
 import jakarta.ws.rs.Produces;
 import jakarta.ws.rs.core.MediaType;
 import jakarta.ws.rs.core.Response;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
 import static resources.Controllers.TechnicianResource.emailBody;
 import static resources.Controllers.TechnicianResource.generateRandomPassword;
 //import static resources.Controllers.TechnicianResource.userInfo;
 import resources.DataAccess.PatientDBUtils;
-import resources.DataAccess.TechnicianDBUtils;
 import resources.DataAccess.UserInfoDBUtils;
 import resources.Email.EmailSender;
-import resources.Models.Doctor;
 import resources.Models.Patient;
-import resources.Models.Technician;
 import resources.Models.UserInformation;
 
 /**
@@ -44,7 +43,8 @@ public class PatientResource {
             String msg="";
             Patient patient = gson.fromJson(json, Patient.class); 
             String password = generateRandomPassword(6);
-            var result = userInfo(patient, password);
+            String pass = hashPassword(password);
+            var result = userInfo(patient, pass);
             new UserInfoDBUtils().addUserInfo(result);
             String toEmail = patient.getEmail();
             var userInfo = new UserInfoDBUtils().getUserId( toEmail);
@@ -68,6 +68,17 @@ public class PatientResource {
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .build();
         }
+    }
+    
+    public static String hashPassword(String password) throws NoSuchAlgorithmException {
+        MessageDigest md = MessageDigest.getInstance("SHA-256");
+        md.update(password.getBytes());
+        byte[] byteData = md.digest();
+        StringBuilder sb = new StringBuilder();
+        for (byte b : byteData) {
+            sb.append(Integer.toString((b & 0xff) + 0x100, 16).substring(1));
+        }
+        return sb.toString();
     }
     
     public static UserInformation userInfo(Patient tc, String password) {

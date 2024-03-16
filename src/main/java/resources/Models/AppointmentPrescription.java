@@ -16,20 +16,21 @@ public class AppointmentPrescription {
     private String technicians;
     private String comment;
     private int appointmentId;
+    private int tId;
     private List<AppointmentPrescriptionDoc> approintmentDocList;
 
     public AppointmentPrescription(){
         
     }
-    
-    public AppointmentPrescription(int id, String testResults, String technicians, String comment, int appointmentId, List<AppointmentPrescriptionDoc> approintmentDocList) {
+
+    public AppointmentPrescription(int id, String testResults, String technicians, String comment, int appointmentId, int tId, List<AppointmentPrescriptionDoc> approintmentDocList) {
         this.id = id;
         this.testResults = testResults;
         this.technicians = technicians;
         this.comment = comment;
-        this.approintmentDocList = approintmentDocList;
         this.appointmentId = appointmentId;
-        
+        this.tId = tId;
+        this.approintmentDocList = approintmentDocList;
     }
 
     public int getId() {
@@ -72,6 +73,14 @@ public class AppointmentPrescription {
         this.appointmentId = appointmentId;
     }
 
+    public int gettId() {
+        return tId;
+    }
+
+    public void settId(int tId) {
+        this.tId = tId;
+    }
+
     public List<AppointmentPrescriptionDoc> getApprointmentDocList() {
         return approintmentDocList;
     }
@@ -79,6 +88,9 @@ public class AppointmentPrescription {
     public void setApprointmentDocList(List<AppointmentPrescriptionDoc> approintmentDocList) {
         this.approintmentDocList = approintmentDocList;
     }
+    
+    
+
     
     
 }
