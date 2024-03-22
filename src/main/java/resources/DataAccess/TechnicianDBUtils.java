@@ -5,35 +5,32 @@
 package resources.DataAccess;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import resources.Models.Technician;
-import resources.Models.UserInformation;
 
 /**
  *
  * @author Madusanka(MadusankaB
  */
-public class TechnicianDBUtils {
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
+public class TechnicianDBUtils  {
     
     public TechnicianDBUtils() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
-        } catch (Exception e) {
-            
+        } 
+        catch (Exception e) {
+             System.err.print(e);
         }
     }
     
-    public Technician getTechnician(int id) throws SQLException {
+    public Technician getTechnician(int id){
         Technician st = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection();
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM technicians WHERE id="+ id);) {
             while (rs.next()) {
@@ -50,16 +47,17 @@ public class TechnicianDBUtils {
                 st.setuId(rs.getInt("userId"));
                 break;
             }
-        } catch (SQLException e) {
+        } 
+        catch (SQLException e) {
             System.err.print(e);
-            throw e;
         }
         return st;
     }
     
-    public Technician getTechnicianbyUserId(int id) throws SQLException {
+    public Technician getTechnicianbyUserId(int id) {
         Technician st = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM technicians WHERE userId="+ id);) {
             while (rs.next()) {
@@ -76,16 +74,17 @@ public class TechnicianDBUtils {
                 st.setuId(rs.getInt("userId"));
                 break;
             }
-        } catch (SQLException e) {
+        } 
+        catch (SQLException e) {
             System.err.print(e);
-            throw e;
         }
         return st;
     }
     
     public List<Technician> getTechnicians() {
         List<Technician> Technicians = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM technicians");) {
             while (rs.next()) {
@@ -101,33 +100,23 @@ public class TechnicianDBUtils {
                 st.setuId(rs.getInt("userId"));
                 Technicians.add(st);
             }
-        } catch (SQLException e) {
+        } 
+        catch (SQLException e) {
             System.err.print(e);
         }
         return Technicians;
     }
     
     public boolean addTechnician(Technician st,int uId) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
-                Statement stmt = conn.createStatement(); 
-                ) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection();
+                Statement stmt = conn.createStatement();) 
+        {
             stmt.executeUpdate("INSERT INTO technicians (id, name, age, city, email, mobileNum, address, startDate,image,userId) "
                     + "VALUES ('"+ st.getId()+"', '"+ st.getName() +"','"+ st.getAge()+"','"+ st.getCity()+"','"+ st.getEmail() +"','"+ st.getMobileNum()+"','"+ st.getAddress()+"', '"+ st.getStartDate()+"', '"+ st.getImage()+"', '"+ uId+"');");
             return true;    
-        } catch (SQLException e) {
-            System.err.print(e);
-        }
-        return false;
-    }
-    
-    public boolean addUserInfo(UserInformation st) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
-                Statement stmt = conn.createStatement(); 
-                ) {
-            stmt.executeUpdate("INSERT INTO userinformation (id,displayName,email,userType,password,active,createDate,modifiedDate,createdBy,modifiedBy)"
-                    + "VALUES ( '"+ st.getId()+"','"+ st.getDisplayName() +"','"+ st.getEmail()+"','"+ st.getUserType()+"','"+ st.getPassword()+"','"+ st.isActive()+"','"+ st.getCreateDate()+"', '"+ st.getModifiedDate()+"','"+ st.getCreatedBy()+"','"+ st.getModifiedBy()+"');");
-            return true;    
-        } catch (SQLException e) {
+        } 
+        catch (SQLException e) {
             System.err.print(e);
         }
         return false;
@@ -135,28 +124,32 @@ public class TechnicianDBUtils {
    
     public boolean updateTechnician(Technician st) {
         try {
-            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
-                    Statement stmt = conn.createStatement(); 
-                ) 
+            DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+            try (Connection conn = dbconfig.getConnection(); 
+                    Statement stmt = conn.createStatement();) 
             {
                 stmt.executeUpdate("UPDATE technicians SET name = '" +st.getName()+ "', age = '" + st.getAge()+ "' , city = '" + st.getCity()+ "', email = '" + st.getEmail()+ "' , mobileNum = '" + st.getMobileNum()+ "' , address = '" + st.getAddress()+ "' , startDate = '" + st.getStartDate()+ "', image = '" + st.getImage()+ "', userId = '" + st.getuId()+ "' WHERE (id = '" + st.getId() +"');");
                 return true;
-            } catch (SQLException e) {
+            } 
+            catch (SQLException e) {
                 System.err.print(e);
             }
-        } catch (Exception e) {
-
+        } 
+        catch (Exception e) {
+            e.printStackTrace();
         }
         return false;
     }
     
     public boolean deleteTechnician(int id) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
-                Statement stmt = conn.createStatement(); 
-                ) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection();
+                Statement stmt = conn.createStatement();) 
+        {
             stmt.executeUpdate("DELETE FROM technicians WHERE (id = '"+ id + "');");
             return true;
-        } catch (SQLException e) {
+        } 
+        catch (SQLException e) {
             e.printStackTrace();
         }
         return false;
