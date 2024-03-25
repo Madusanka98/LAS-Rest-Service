@@ -21,10 +21,6 @@ import resources.Models.UserInformation;
  */
 public class LoginDBUtils {
     
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
-    
     public LoginDBUtils() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -34,8 +30,9 @@ public class LoginDBUtils {
     }
     
     public UserInformation checkLogin(Login login) throws SQLException, JsonProcessingException, NoSuchAlgorithmException {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         UserInformation user = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); ){
                 String email = login.getEmail();
                 String password = login.getPassword();
@@ -48,7 +45,7 @@ public class LoginDBUtils {
                 String storedPassword = getPasswordFromDatabase(email);
                 if (hashedEnteredPassword.equals(storedPassword)) {
                     user = new UserInformation();
-                    try (Connection conn1 = DriverManager.getConnection(DB_URL, USER, PASS); 
+                    try (Connection conn1 = dbconfig.getConnection(); 
                         Statement stmt1 = conn1.createStatement(); ){
                             String check = "SELECT * FROM abc_lab.userinformation WHERE email= '"+ email +"' ;";
                             ResultSet r = stmt1.executeQuery(check );
@@ -77,11 +74,12 @@ public class LoginDBUtils {
     }
     
     public static String getPasswordFromDatabase(String username) throws SQLException {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         Connection conn = null;
         PreparedStatement stmt = null;
         ResultSet rs = null;
         try {
-            conn  = DriverManager.getConnection(DB_URL, USER, PASS);
+            conn  = dbconfig.getConnection(); 
             String sql = "SELECT password FROM userinformation WHERE email = ?";
             stmt = conn.prepareStatement(sql);
             stmt.setString(1, username);
@@ -105,9 +103,10 @@ public class LoginDBUtils {
     }
     
     public UserInformation getUserType(int id) throws SQLException{
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         UserInformation user = null;
-        try (Connection conn1 = DriverManager.getConnection(DB_URL, USER, PASS); 
-            Statement stmt1 = conn1.createStatement(); ){
+        try (Connection conn1 = dbconfig.getConnection();  
+           Statement stmt1 = conn1.createStatement(); ){
             user = new UserInformation();
                 String query = "SELECT * FROM abc_lab.userinformation WHERE id= '"+ id + "' ;";
                 ResultSet r = stmt1.executeQuery(query );

@@ -18,9 +18,6 @@ import resources.Models.AppointmentReport;
  * @author Madusanka(MadusankaB
  */
 public class AppointmentReportDBUtils {
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
     
     public AppointmentReportDBUtils() {
         try {
@@ -31,8 +28,9 @@ public class AppointmentReportDBUtils {
     }
     
     public List<AppointmentReport> getAppointmentReports() {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<AppointmentReport> AppointmentReportdata = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM appointmentreportview");) {
             while (rs.next()) {

@@ -73,8 +73,12 @@ public class AppointmentResource {
             String msg="";
             Appointment appointment = gson.fromJson(json, Appointment.class); 
             
-            new AppointmentDBUtils().addAppointment(appointment);
-            
+            boolean res =  new AppointmentDBUtils().addAppointment(appointment);
+            if(!res){
+                return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .build();
+            }
             return Response
                     .status(Response.Status.CREATED)
                     .build();

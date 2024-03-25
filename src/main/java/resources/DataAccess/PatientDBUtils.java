@@ -17,10 +17,6 @@ import resources.Models.Patient;
  */
 public class PatientDBUtils {
     
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
-    
     public PatientDBUtils() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
@@ -30,7 +26,8 @@ public class PatientDBUtils {
     }
     
     public boolean addPatient(Patient st,String uniqueId,int userId) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection();  
                 Statement stmt = conn.createStatement(); 
                 ) {
             stmt.executeUpdate("INSERT INTO patients ( name, gender,mobileNum , email, dob, address,image,uniqueId,userId) "
@@ -43,8 +40,9 @@ public class PatientDBUtils {
     }
     
     public Patient getPatient(int id) throws SQLException {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         Patient st = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM patients WHERE id="+ id);) {
             while (rs.next()) {
@@ -69,7 +67,8 @@ public class PatientDBUtils {
     
     public Patient getPatientbyUserId(int id) throws SQLException {
         Patient st = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM patients WHERE userId="+ id);) {
             while (rs.next()) {
