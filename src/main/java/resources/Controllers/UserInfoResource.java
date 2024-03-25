@@ -52,37 +52,6 @@ public class UserInfoResource {
                 .status(Response.Status.INTERNAL_SERVER_ERROR)
                 .build();
                 }
-            //String type = user.getUserType().replaceAll("\"", "");
-            
-//            if(user.getId()!=0 && user.getUserType()==3){
-//                Patient patient =new PatientDBUtils().getPatientbyUserId(user.getId());
-//                patient.setImage("");
-//                if (patient != null) {
-//                      return Response
-//                        .ok(gson.toJson(patient))
-//                        .build();
-//                } 
-//            }else if(user.getId()!=0 && user.getUserType()==2){
-//                Technician technician = new TechnicianDBUtils().getTechnicianbyUserId(user.getId());
-//                technician.setImage("");
-//                if (technician != null) {
-//                      return Response
-//                        .ok(gson.toJson(technician))
-//                        .build();
-//                } 
-//            }else if(user.getId()!=0 && user.getUserType()==1){
-//                //patient.setImage("");
-//                return Response
-//                .status(Response.Status.INTERNAL_SERVER_ERROR)
-//                .build();
-//            }else{
-//                return Response
-//                    .status(Response.Status.NOT_FOUND)
-//                    .build();
-//            }
-//            return Response
-//                    .status(Response.Status.NOT_FOUND)
-//                    .build();
             
         } catch(Exception e) {
              return Response

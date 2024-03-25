@@ -20,9 +20,6 @@ import resources.Models.AppointmentPrescriptionDoc;
  * @author Madusanka(MadusankaB
  */
 public class AppointmentPrescriptionDBUtils {
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
     
     public AppointmentPrescriptionDBUtils() {
         try {
@@ -32,18 +29,14 @@ public class AppointmentPrescriptionDBUtils {
         }
     }
     
-    
-    
     public boolean addAppointmentPrescription(AppointmentPrescription st) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         String insertQuery = "INSERT INTO apPrescription ( testResults, technicians,comment , appointmentId,tId)  VALUES ('"+ st.getTestResults()+"','"+ st.getTechnicians()+"','"+ st.getComment()+"','"+ st.getAppointmentId()+"', '"+ st.gettId()+"');";
         try {
-            try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            try (Connection connection = dbconfig.getConnection(); ) {
                 // Create a prepared statement with the option to retrieve generated keys
                 try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
-                    // Set the parameter values for the insert query
-                    //preparedStatement.setString(1, "value1");
-                    //preparedStatement.setString(2, "value2");
-
+                    
                     // Execute the insert query
                     int affectedRows = preparedStatement.executeUpdate();
 
@@ -69,7 +62,8 @@ public class AppointmentPrescriptionDBUtils {
     }
     
     public  void addAppointmentPrescriptionDocs(List<AppointmentPrescriptionDoc> docs,int aPrescriptionId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection connection = dbconfig.getConnection(); ) {
             String sql = "INSERT INTO apPrescriptionDoc ( fileName, fileType,document ,active, aPrescriptionId)  VALUES (?,?,?,?,?)";
             try (PreparedStatement pre = connection.prepareStatement(sql)) {
                 for (AppointmentPrescriptionDoc model : docs) {
@@ -92,11 +86,11 @@ public class AppointmentPrescriptionDBUtils {
     public AppointmentPrescription getAppointmentPrescription(int id) throws SQLException {
         List<AppointmentPrescriptionDoc> docs = null; 
         AppointmentPrescription st = new AppointmentPrescription();
-        Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        Connection conn = dbconfig.getConnection();
         Statement stmt = conn.createStatement(); 
         try (ResultSet rs = stmt.executeQuery("SELECT * FROM apPrescription WHERE appointmentId="+ id);) {
             while (rs.next()) {
-                
                 //st = new Appointment();
                 st.setId( rs.getInt("id"));
                 st.setTestResults( rs.getString("testResults"));
@@ -117,8 +111,9 @@ public class AppointmentPrescriptionDBUtils {
     }
     
     public List<AppointmentPrescriptionDoc> getAppointmentPrescriptionDocs(int id) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<AppointmentPrescriptionDoc> getdocs = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM apPrescriptionDoc WHERE aPrescriptionId="+ id);) {
             while (rs.next()) {
@@ -138,8 +133,9 @@ public class AppointmentPrescriptionDBUtils {
     }
     
     public List<AppointmentPrescription> getAppointmentPrescriptions() {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<AppointmentPrescription> appointments = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM apPrescription");) {
             while (rs.next()) {
@@ -161,8 +157,9 @@ public class AppointmentPrescriptionDBUtils {
     }
     
     public List<AppointmentPrescription> getPrescriptionByUserId(int id) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<AppointmentPrescription> appointments = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection();  
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM apPrescription WHERE userId="+ id);) {
             while (rs.next()) {
@@ -184,8 +181,9 @@ public class AppointmentPrescriptionDBUtils {
     }
     
     public AppointmentPrescription getAppointmentPrescriptionbyUserId(int id) throws SQLException {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         AppointmentPrescription st = new AppointmentPrescription();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM apPrescription WHERE userId="+ id);) {
             while (rs.next()) {
@@ -204,8 +202,9 @@ public class AppointmentPrescriptionDBUtils {
     }
     
     public boolean updateAppointmentPrescription(AppointmentPrescription st,int id) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         try {
-            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+            try (Connection conn = dbconfig.getConnection();  
                     Statement stmt = conn.createStatement();) 
             {
                 stmt.executeUpdate("UPDATE apPrescription SET testResults = '" +st.getTestResults()+ "', technicians = '" + st.getTechnicians()+ "' , comment = '" + st.getComment()+ "' , appointmentId = '" + st.getAppointmentId()+ "' , tId = '" + st.gettId()+ "' WHERE (id = '" + id +"');");
@@ -221,7 +220,8 @@ public class AppointmentPrescriptionDBUtils {
     }
     
     public void updateAppointmentPrescriptionDocs(List<AppointmentPrescriptionDoc> aDocs,int aId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection connection = dbconfig.getConnection(); ) {
             for (AppointmentPrescriptionDoc doc : aDocs) {
                 if (doc.getActive()==1) {
                     if (!checkIfExists(connection,doc.getId())) {
@@ -281,7 +281,8 @@ public class AppointmentPrescriptionDBUtils {
     }
     
     public boolean deleteAppointmentPrescription(int id) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); ) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection();  ) {
             Statement stmt = conn.createStatement(); 
                 
             stmt.executeUpdate("DELETE FROM apPrescription WHERE (id = '"+ id + "');");

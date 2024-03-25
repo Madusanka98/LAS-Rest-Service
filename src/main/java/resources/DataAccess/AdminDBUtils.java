@@ -16,9 +16,6 @@ import resources.Models.Admin;
  * @author Madusanka(MadusankaB
  */
 public class AdminDBUtils {
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
     
     public AdminDBUtils() {
         try {
@@ -30,7 +27,8 @@ public class AdminDBUtils {
     
     public Admin getAdminbyUserId(int id) throws SQLException {
         Admin st = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM admin WHERE userId="+ id);) {
             while (rs.next()) {

@@ -5,25 +5,24 @@
 package resources.DataAccess;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
+import resources.Email.EmailSender;
 import resources.Models.Appointment;
 import resources.Models.ApprointmentDoc;
+import resources.Models.Payment;
 import resources.Models.TestingType;
+import resources.Models.UserInformation;
 
 /**
  *
  * @author Madusanka(MadusankaB
  */
 public class AppointmentDBUtils {
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
     
     public AppointmentDBUtils() {
         try {
@@ -36,10 +35,11 @@ public class AppointmentDBUtils {
     
     
     public boolean addAppointment(Appointment st) throws SQLException {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         if(checkTimeavAilability(st)){
             String insertQuery = "INSERT INTO appointment ( preferredDate, preferredTime,appointmentReason , appointmentType, referredDoctor, emgContactPer,emgMobileNum,userId)  VALUES ('"+ st.getPreferredDate()+"','"+ st.getPreferredTime()+"','"+ st.getAppointmentReason()+"','"+ st.getAppointmentType() +"','"+ st.getReferredDoctor()+"','"+ st.getEmgContactPer()+"','"+ st.getEmgMobileNum()+"', '"+ st.getUserId()+"');";
             try {
-                try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+                try (Connection connection = dbconfig.getConnection(); ) {
                     // Create a prepared statement with the option to retrieve generated keys
                     try (PreparedStatement preparedStatement = connection.prepareStatement(insertQuery, Statement.RETURN_GENERATED_KEYS)) {
                         // Set the parameter values for the insert query
@@ -54,7 +54,18 @@ public class AppointmentDBUtils {
                             try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
                                 if (generatedKeys.next()) {
                                     int lastInsertedId = generatedKeys.getInt(1);
+                                    if(st.getApprointmentDocList() != null){
                                     addApprointmentDocs(st.getApprointmentDocList(),lastInsertedId);
+                                    }
+                                    boolean payment =   addPaymentStatus(lastInsertedId);
+                                    if(payment){
+                                        TestingType type = new TestingTypeDBUtils().getTestingType(st.getAppointmentType());
+                                        UserInformation userInfo = new UserInfoDBUtils().getUserInfo(st.getUserId());
+                                        String mailBody = paymentMail(type);
+                                        //send email
+                                        EmailSender emailSender = new EmailSender();
+                                        emailSender.sendEmail(userInfo.getEmail(), "Lab Appointment Paid Successfully", mailBody);
+                                    }
                                 } else {
                                     System.err.println("Document upload failed");
                                 }
@@ -73,7 +84,8 @@ public class AppointmentDBUtils {
     }
     
     public boolean checkTimeavAilability(Appointment app) throws SQLException{
-        Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        Connection conn = dbconfig.getConnection(); 
         Statement stmt = conn.createStatement();
         String query = "SELECT COUNT(*) AS count FROM abc_lab.appointment WHERE preferredDate= '"+ app.getPreferredDate()+ "' and preferredTime= '"+ app.getPreferredTime()+ "' ;";
         ResultSet rs1 = stmt.executeQuery(query );
@@ -84,11 +96,19 @@ public class AppointmentDBUtils {
             return true;
         }else
             return false;
-
+    }
+    
+    public String paymentMail(TestingType type){
+        return  "Dear User,\n\n"
+                            + "Your credit card payment of Rs "+type.getPrice()+" for the "+type.getName()+" appointment was successful.\n\n"
+                            + "Thank you for using our service.\n\n"
+                            + "Best regards,\n"
+                            + "ABC Lab Service Team";
     }
     
     public  void addApprointmentDocs(List<ApprointmentDoc> docs,int aId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection connection = dbconfig.getConnection(); ) {
             String sql = "INSERT INTO approintmentdoc ( fileName, fileType,document ,active, approintmentId)  VALUES (?,?,?,?,?)";
             try (PreparedStatement pre = connection.prepareStatement(sql)) {
                 for (ApprointmentDoc model : docs) {
@@ -106,8 +126,24 @@ public class AppointmentDBUtils {
         }
     }
     
+    public  boolean  addPaymentStatus(int appId) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection();
+                Statement stmt = conn.createStatement();) 
+        {
+            stmt.executeUpdate("INSERT INTO payment (appointmentId, isPaied) "
+                    + "VALUES ('"+ appId+"', '1');");
+            return true;    
+        }
+        catch (SQLException e) {
+            System.err.print(e);
+        }
+        return false;
+    }
+    
     public  void updateApprointmentDocs(List<ApprointmentDoc> docs,int aId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection connection = dbconfig.getConnection(); ) {
             for (ApprointmentDoc model : docs) {
             }
         } catch (SQLException e) {
@@ -116,9 +152,10 @@ public class AppointmentDBUtils {
     }
     
     public Appointment getAppointment(int id) throws SQLException {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<ApprointmentDoc> docs = null;
         Appointment st = new Appointment();
-        Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        Connection conn = dbconfig.getConnection(); 
         Statement stmt = conn.createStatement(); 
         try (ResultSet rs = stmt.executeQuery("SELECT * FROM appointment WHERE id="+ id);) {
             while (rs.next()) {
@@ -154,8 +191,9 @@ public class AppointmentDBUtils {
     
     
     public List<ApprointmentDoc> getApprointmentDocs(int id) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<ApprointmentDoc> getdocs = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection();  
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM approintmentdoc WHERE approintmentId="+ id);) {
             while (rs.next()) {
@@ -175,8 +213,9 @@ public class AppointmentDBUtils {
     }
     
     public List<Appointment> getAppointments() {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<Appointment> appointments = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM appointment");) {
             while (rs.next()) {
@@ -206,8 +245,9 @@ public class AppointmentDBUtils {
     }
     
     public List<Appointment> getPatientAppointments( int id) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<Appointment> appointments = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection();  
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM appointment  WHERE userId="+ id);) {
             while (rs.next()) {
@@ -241,7 +281,8 @@ public class AppointmentDBUtils {
     }
     
     public boolean hasprePrescription(Appointment app,int id) throws SQLException{
-        Connection conn = DriverManager.getConnection(DB_URL, USER, PASS);
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        Connection conn = dbconfig.getConnection(); 
         Statement stmt = conn.createStatement();
         String query = "SELECT COUNT(*) AS count FROM abc_lab.apprescription WHERE appointmentId= '"+ id+ "' ;";
         ResultSet rs1 = stmt.executeQuery(query );
@@ -256,8 +297,9 @@ public class AppointmentDBUtils {
     }
     
     public List<Appointment> getPrescriptionbyUserId( int id) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<Appointment> appointments = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM appointment  WHERE userId="+ id);) {
             while (rs.next()) {
@@ -291,9 +333,10 @@ public class AppointmentDBUtils {
     }
     
     public List<Appointment> getAppointmentbyUserId(int id) throws SQLException {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         Appointment st = new Appointment();
         List<Appointment> appointments = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM appointment WHERE userId="+ id);) {
             while (rs.next()) {
@@ -317,7 +360,8 @@ public class AppointmentDBUtils {
     
     public boolean updateAppointment(Appointment st) {
         try {
-            try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+            DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+            try (Connection conn = dbconfig.getConnection();  
                     Statement stmt = conn.createStatement();) 
             {
                 stmt.executeUpdate("UPDATE appointment SET preferredDate = '" +st.getPreferredDate()+ "', preferredTime = '" + st.getPreferredTime()+ "' , appointmentReason = '" + st.getAppointmentReason()+ "', appointmentType = '" + st.getAppointmentType()+ "' , referredDoctor = '" + st.getReferredDoctor()+ "' , emgContactPer = '" + st.getEmgContactPer()+ "' , emgMobileNum = '" + st.getEmgMobileNum()+ "', userId = '" + st.getUserId()+ "' WHERE (id = '" + st.getId() +"');");
@@ -329,11 +373,13 @@ public class AppointmentDBUtils {
         } catch (Exception e) {
 
         }
+        
         return false;
     }
     
     public void updateAppointmentDocs(List<ApprointmentDoc> aDocs,int aId) {
-        try (Connection connection = DriverManager.getConnection(DB_URL, USER, PASS)) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection connection = dbconfig.getConnection(); ) {
             for (ApprointmentDoc doc : aDocs) {
                 if (doc.getActive()==1) {
                     if (!checkIfExists(connection,doc.getId())) {
@@ -409,7 +455,8 @@ public class AppointmentDBUtils {
     }
     
     public boolean deleteAppointment(int id) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); ) {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection();  ) {
             Statement stmt = conn.createStatement(); 
                 
             stmt.executeUpdate("DELETE FROM appointment WHERE (id = '"+ id + "');");
@@ -429,7 +476,8 @@ public class AppointmentDBUtils {
     
     public TestingType getTestingType(int id) throws SQLException {
         TestingType type = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection();  
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM testingtype WHERE id="+ id);) {
             while (rs.next()) {
@@ -448,8 +496,9 @@ public class AppointmentDBUtils {
     }
     
     public List<TestingType> getTestingTypes() {
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
         List<TestingType> types = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        try (Connection conn = dbconfig.getConnection();  
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM testingtype");) {
             while (rs.next()) {

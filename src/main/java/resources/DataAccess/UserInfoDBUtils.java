@@ -5,7 +5,6 @@
 package resources.DataAccess;
 
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
@@ -17,36 +16,32 @@ import resources.Models.UserInformation;
  */
 public class UserInfoDBUtils {
     
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
-    
     public UserInfoDBUtils() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (Exception e) {
-            
+            System.err.print(e);
         }
     }
     
-    
     public boolean addUserInfo(UserInformation st) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ) {
             stmt.executeUpdate("INSERT INTO userinformation (id,displayName,email,userType,password,active,createDate,modifiedDate,createdBy,modifiedBy,image)"
                     + "VALUES ( '"+ st.getId()+"','"+ st.getDisplayName() +"','"+ st.getEmail()+"','"+ st.getUserType()+"','"+ st.getPassword()+"','"+ st.isActive()+"','"+ st.getCreateDate()+"', '"+ st.getModifiedDate()+"','"+ st.getCreatedBy()+"','"+ st.getModifiedBy()+"','"+ st.getImage()+"');");
             return true;    
         } catch (SQLException e) {
-            System.err.print(e);
+            e.printStackTrace();
         }
         return false;
     }
     
     public UserInformation getUserId(String email) throws SQLException {
-        int userId=0;
         UserInformation st = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM userinformation WHERE email='"+ email+"';");) {
             while (rs.next()) {
@@ -55,9 +50,26 @@ public class UserInfoDBUtils {
                 break;
             }
         } catch (SQLException e) {
-            System.err.print(e);
-            throw e;
+            e.printStackTrace();
         }
         return st;
     }
+    
+    public UserInformation getUserInfo(int id) throws SQLException {
+        UserInformation st = null;
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
+                Statement stmt = conn.createStatement(); 
+                ResultSet rs = stmt.executeQuery("SELECT * FROM userinformation WHERE id='"+ id+"';");) {
+            while (rs.next()) {
+                st = new UserInformation();
+                st.setEmail( rs.getString("email"));
+                break;
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return st;
+    }
+    
 }

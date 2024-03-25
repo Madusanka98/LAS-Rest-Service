@@ -18,21 +18,19 @@ import resources.Models.TestingType;
  * @author Madusanka(MadusankaB
  */
 public class TestingTypeDBUtils {
-    static final String DB_URL = "jdbc:mysql://localhost:3306/abc_lab";
-    static final String USER = "root";
-    static final String PASS = "";
     
     public TestingTypeDBUtils() {
         try {
             Class.forName("com.mysql.cj.jdbc.Driver");
         } catch (Exception e) {
-            
+            System.err.print(e);
         }
     }
     
     public TestingType getTestingType(int id) throws SQLException {
         TestingType type = null;
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM testingtype WHERE id="+ id);) {
             while (rs.next()) {
@@ -52,7 +50,8 @@ public class TestingTypeDBUtils {
     
     public List<TestingType> getTestingTypes() {
         List<TestingType> types = new ArrayList<>();
-        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS); 
+        DatabaseConfig dbconfig = DatabaseConfig.getInstance();
+        try (Connection conn = dbconfig.getConnection(); 
                 Statement stmt = conn.createStatement(); 
                 ResultSet rs = stmt.executeQuery("SELECT * FROM testingtype");) {
             while (rs.next()) {
